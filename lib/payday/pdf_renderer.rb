@@ -26,6 +26,7 @@ module Payday
       invoice_details(invoice, pdf)
       line_items_table(invoice, pdf)
       totals_lines(invoice, pdf)
+      footer(invoice, pdf)
       notes(invoice, pdf)
 
       page_numbers(pdf)
@@ -78,16 +79,25 @@ module Payday
 
       # render the company details
       table_data = []
-      table_data << [bold_cell(pdf, invoice_or_default(invoice, :company_name).strip, size: 12)]
-
-      invoice_or_default(invoice, :company_details).lines.each { |line| table_data << [line] }
+      table_data << [bold_cell(pdf, invoice_or_default(invoice, :title).strip, size: 16, width: 100)]
 
       table = pdf.make_table(table_data, cell_style: { borders: [], padding: 0 })
-      pdf.bounding_box([pdf.bounds.width - table.width, pdf.bounds.top], width: table.width, height: table.height + 5) do
+      pdf.bounding_box([pdf.bounds.width - table.width, pdf.bounds.top - 20], width: table.width, height: table.height + 5) do
         table.draw
       end
 
       pdf.move_cursor_to(pdf.bounds.top - logo_height - 20)
+    end
+
+    def self.footer(invoice, pdf)
+      table_data = []
+      table_data << [invoice_or_default(invoice, :company_name).strip]
+      invoice_or_default(invoice, :company_details).lines.each { |line| table_data << [line] }
+
+      table = pdf.make_table(table_data, width: 540, cell_style: { borders: [], padding: 0, align: :center, size: 10, leading: 10 })
+      pdf.bounding_box([0 , 50], width: table.width, height: table.height + 5) do
+        table.draw
+      end
     end
 
     def self.bill_to_ship_to(invoice, pdf)
